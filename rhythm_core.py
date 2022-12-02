@@ -12,9 +12,9 @@ MIDI_socket = ctx.socket(zmq.REP)
 MIDI_socket.bind("tcp://127.0.0.1:5555")
 
 MIDI_input_stream = zmq.eventloop.zmqstream.ZMQStream(MIDI_socket)
-
+system_snapshot = {}
 def echo(msg):
-    MIDI_input_stream.send_multipart(msg, copy=True)
+    ack_msg = "ACK"
     if len(msg) == 1:
         # We have a control message
         msg = msg[0].decode('utf-8')
@@ -36,6 +36,10 @@ def echo(msg):
         if msg == "TEMPO_RESET":
             # Do Action One
             print("RESET")
+        if msg == "GET_SNAPSHOT":
+            ack_msg = system_snapshot
+        MIDI_input_stream.send_string(ack_msg, copy=True)
+            
    
 
 

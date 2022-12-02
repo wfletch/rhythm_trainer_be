@@ -37,7 +37,8 @@ def echo(msg):
             # Do Action One
             print("RESET")
         if msg == "GET_SNAPSHOT":
-            ack_msg = system_snapshot
+            print ("SNAPSHOT REQUEST")
+            ack_msg = "FRIGGEN TEST" 
         MIDI_input_stream.send_string(ack_msg, copy=True)
             
    

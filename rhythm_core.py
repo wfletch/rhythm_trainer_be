@@ -5,41 +5,46 @@ from zmq.eventloop import ioloop
 import tornado
 import asyncio
 import datetime
+
+d_hash = {"second_delay" : 5, "enabled" : True}
 ctx = zmq.Context.instance()
 MIDI_socket = ctx.socket(zmq.REP)
 MIDI_socket.bind("tcp://127.0.0.1:5555")
 
 MIDI_input_stream = zmq.eventloop.zmqstream.ZMQStream(MIDI_socket)
 
-second_delay = 5
 def echo(msg):
     MIDI_input_stream.send_multipart(msg, copy=True)
     if len(msg) == 1:
         # We have a control message
         msg = msg[0].decode('utf-8')
-        print(msg)
-        if msg == 1:
+        if msg == "TEMPO_UP":
             # Do Action One
             print("TEMPO UP")
-            second_delay -=1
-        if msg == 2:
+            d_hash["second_delay"] -=1
+        if msg == "TEMPO_DOWN":
             # Do Action One
             print("TEMPO DOWN")
-            second_delay+=1
-        if msg == 3:
+            d_hash["second_delay"] +=1
+        if msg == "TEMPO_PAUSE":
             # Do Action One
             print("PAUSE")
-            second_delay += 10000000000
-        if msg == 4:
+            d_hash["enabled"] = not d_hash["enabled"] 
+            if d_hash["enabled"]:
+                next_tick = datetime.datetime.now().timestamp() + d_hash["second_delay"]
+                tornado.ioloop.IOLoop.current().add_timeout(next_tick, wrapper)
+        if msg == "TEMPO_RESET":
             # Do Action One
             print("RESET")
    
 
 
 def wrapper():
-    print ("TEST")
-    next_tick = datetime.datetime.now().timestamp() + second_delay 
-    tornado.ioloop.IOLoop.current().add_timeout(next_tick, wrapper)
+    print ("TEST: ")
+    next_tick = datetime.datetime.now().timestamp() + d_hash["second_delay"]
+    print(d_hash)
+    if d_hash["enabled"]:
+        tornado.ioloop.IOLoop.current().add_timeout(next_tick, wrapper)
 
 MIDI_input_stream.on_recv(echo, copy=True)
 wrapper()
